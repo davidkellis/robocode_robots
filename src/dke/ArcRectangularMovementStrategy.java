@@ -1,9 +1,12 @@
 package dke;
 
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Random;
 
-public class RectangularMovementStrategy implements MovementStrategy {
+public class ArcRectangularMovementStrategy implements MovementStrategy {
   public enum State {
     Initial, DrivingNorth, DrivingEast, DrivingSouth, DrivingWest
   }
@@ -12,11 +15,11 @@ public class RectangularMovementStrategy implements MovementStrategy {
   public DkeRobot robot;
   public MovementInstruction lastMovement;
   public boolean randomizeVelocity;
-  public double wallBufferWidth = 150;
+  public double wallBufferWidth = 100;
   public State currentState;
   public MovementInstruction currentMovementInstruction;
 
-  public RectangularMovementStrategy(DkeRobot robot) {
+  public ArcRectangularMovementStrategy(DkeRobot robot) {
     this.robot = robot;
     
     rand = new Random();
@@ -56,19 +59,19 @@ public class RectangularMovementStrategy implements MovementStrategy {
     Point2D.Double pos = robot.currentCoords();
     switch(dir) {
     case North:
-      currentMovementInstruction = robot.moveInAStraightLine(pos.x, robot.northWall - wallBufferWidth);
+      currentMovementInstruction = robot.moveInAnArc(pos.x, robot.northWall - wallBufferWidth, Direction.Right, 50);
       currentState = State.DrivingNorth;
       break;
     case South:
-      currentMovementInstruction = robot.moveInAStraightLine(pos.x, wallBufferWidth);
+      currentMovementInstruction = robot.moveInAnArc(pos.x, wallBufferWidth, Direction.Right, 50);
       currentState = State.DrivingSouth;
       break;
     case East:
-      currentMovementInstruction = robot.moveInAStraightLine(robot.eastWall - wallBufferWidth, pos.y);
+      currentMovementInstruction = robot.moveInAnArc(robot.eastWall - wallBufferWidth, pos.y, Direction.Right, 50);
       currentState = State.DrivingEast;
       break;
     case West:
-      currentMovementInstruction = robot.moveInAStraightLine(wallBufferWidth, pos.y);
+      currentMovementInstruction = robot.moveInAnArc(wallBufferWidth, pos.y, Direction.Right, 50);
       currentState = State.DrivingWest;
       break;
     }
@@ -78,5 +81,17 @@ public class RectangularMovementStrategy implements MovementStrategy {
   public void driveToWallNearestCurrentHeading() {
     CardinalDirection dir = robot.cardinalDirectionNearestHeading(robot.currentAbsoluteHeading());
     driveToWall(dir);
+  }
+  
+  public void onPaint(Graphics2D g) {
+    try {
+      Method m = currentMovementInstruction.getClass().getMethod("onPaint", new Class[]{Graphics2D.class});
+      m.invoke(currentMovementInstruction, new Object[]{g});
+    } catch (SecurityException e) {
+    } catch (NoSuchMethodException e) {
+    } catch (IllegalArgumentException e) {
+    } catch (IllegalAccessException e) {
+    } catch (InvocationTargetException e) {
+    }
   }
 }

@@ -11,6 +11,7 @@ public class DkeRobot extends AdvancedRobot {
   public static double halfPI = Math.PI / 2;
   public static double quarterPI = Math.PI / 4;
   public static double twoPI = 2 * Math.PI;
+  public static double threePIoverTwo = 3 * Math.PI / 2.0;
   
   public double eastWall;
   public double northWall;
@@ -64,6 +65,9 @@ public class DkeRobot extends AdvancedRobot {
     }
   }
   
+  // Returns a rotation amount in Radians.
+  //   A positive return value indicates that the robot should turn right.
+  //   A negative return value indicates that the robot should turn left.
   public double bearingToPoint(Point2D.Double destinationPoint) {
     double diff = headingToPoint(destinationPoint) - currentAbsoluteHeading();
     if(diff > PI) {
@@ -73,6 +77,61 @@ public class DkeRobot extends AdvancedRobot {
     } else {
       return diff;
     }
+  }
+  
+  
+  public Point2D.Double pointAtHeading(double heading, double distance) {
+    return pointAtHeading(heading, distance, currentCoords());
+  }
+  
+  public Point2D.Double pointAtHeading(double heading, double distance, Point2D.Double originPosition) {
+    heading = heading % twoPI;     // normalize heading to something in the range: 0 <= heading < 2*PI
+    double x, y;
+    
+    // domain of Tangent function is undefined at 90, 270
+    if(heading == halfPI) {                 // heading is 90, move right
+      x = originPosition.x + distance;
+      y = originPosition.y;
+    } else if (heading == threePIoverTwo) { // heading is 270, move left
+      x = originPosition.x - distance;
+      y = originPosition.y;
+    } else {                                // domain of Tangent function is defined at all other angles.
+      double ratioOppOverAdj = Math.tan(heading);
+      
+      double adj = Math.sqrt(Math.pow(distance, 2) / (Math.pow(ratioOppOverAdj, 2) + 1));
+      double opp = Math.sqrt(Math.pow(distance, 2) - Math.pow(adj, 2));
+      
+      // ****** NOTE ******
+      // The adjacent length, adj, represents the change in Y
+      // The opposite length, opp, represents the change in X
+      
+      if(heading > PI) {                    // destination point is left of the bot's current position
+        if(heading > threePIoverTwo) {      // destination point is above the bot's current position
+          x = originPosition.x - opp;
+          y = originPosition.y + adj;
+        } else {                            // destination point is below the bot's current position
+          x = originPosition.x - opp;
+          y = originPosition.y - adj;
+        }
+      } else {                              // destination point will be to the right of the bot's current position
+        if(heading < halfPI) {              // destination point is above the bot's current position
+          x = originPosition.x + opp;
+          y = originPosition.y + adj;
+        } else {                            // destination point is below the bot's current position
+          x = originPosition.x + opp;
+          y = originPosition.y - adj;
+        }
+      }
+    }
+    return new Point2D.Double(x, y);
+  }
+  
+  public Point2D.Double pointAtBearing(double bearing, double distance) {
+    return pointAtHeading(getHeading() + bearing, distance);
+  }
+
+  public Point2D.Double pointAtBearing(double bearing, double distance, Point2D.Double originPosition, double originHeading) {
+    return pointAtHeading(originHeading + bearing, distance, originPosition);
   }
 
   public double distanceFromWall(CardinalDirection directionOfWall) {
@@ -151,5 +210,13 @@ public class DkeRobot extends AdvancedRobot {
   
   public MoveInAStraightLine moveInAStraightLine(double x, double y) {
     return new MoveInAStraightLine(this, new Point2D.Double(x, y));
+  }
+  
+  public MoveInAnArc moveInAnArc(double x, double y, Direction directionOfConcavity, double sagittaLength) {
+    return new MoveInAnArc(this, new Point2D.Double(x, y), directionOfConcavity, sagittaLength);
+  }
+  
+  public void setMaxTurnRateRadians(double newMaxTurnRateInRadians) {
+    setMaxTurnRate(Math.toDegrees(newMaxTurnRateInRadians));
   }
 }
