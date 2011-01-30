@@ -5,8 +5,9 @@ import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 
 import robocode.Rules;
+import robocode.util.Utils;
 
-public class MoveInAnArc implements MovementInstruction {
+public class MoveInAnArcBackward implements MovementInstruction {
   public enum State {
     Initial, TurningToInitialAngle, Driving, Finished
   }
@@ -36,7 +37,7 @@ public class MoveInAnArc implements MovementInstruction {
    * @param sagittaLength is the length of the sagitta in pixels. See http://mathworld.wolfram.com/Sagitta.html.
    *                      Note: sagittaLength <= half the distance between the robot and the destination point.
    */
-  public MoveInAnArc(DkeRobot robot, Point2D.Double destination, Direction directionOfConcavity, double sagittaLength) {
+  public MoveInAnArcBackward(DkeRobot robot, Point2D.Double destination, Direction directionOfConcavity, double sagittaLength) {
     this.robot = robot;
     this.destination = destination;
     this.origin = robot.currentCoords();
@@ -85,7 +86,7 @@ public class MoveInAnArc implements MovementInstruction {
       }
       break;
     case Driving:
-      updateMaximumAngularAndForwardVelocity();
+      updateMaximumAngularAndBackwardVelocity();
       if(!robot.isTraveling() && !robot.isTurning()) {
         // reset the max turn velocity and forward velocity
         robot.setMaxTurnRate(Rules.MAX_TURN_RATE);
@@ -106,9 +107,9 @@ public class MoveInAnArc implements MovementInstruction {
     double angleBetweenChordAndTangentLine = halfOfSectorAngle;
     double bearingToStartOfTurnAngle;
     if(directionOfConcavity == Direction.Left) {
-      bearingToStartOfTurnAngle = bearingToDestinationInRadians - angleBetweenChordAndTangentLine;
+      bearingToStartOfTurnAngle = Utils.normalRelativeAngle(bearingToDestinationInRadians - angleBetweenChordAndTangentLine + Math.PI);
     } else {
-      bearingToStartOfTurnAngle = bearingToDestinationInRadians + angleBetweenChordAndTangentLine;
+      bearingToStartOfTurnAngle = Utils.normalRelativeAngle(bearingToDestinationInRadians + angleBetweenChordAndTangentLine + Math.PI);
     }
 
     // DEBUG LINE BELOW!
@@ -125,13 +126,13 @@ public class MoveInAnArc implements MovementInstruction {
   
   public void driveToDestination() {
     // drive toward the destination point on the arc.
-    robot.setAhead(arcLength);
+    robot.setBack(arcLength);
     if(directionOfConcavity == Direction.Left) {    // concave left
       robot.setTurnRightRadians(fullSectorAngle);
     } else {                                        // concave right
       robot.setTurnLeftRadians(fullSectorAngle);
     }
-    updateMaximumAngularAndForwardVelocity();
+    updateMaximumAngularAndBackwardVelocity();
     currentState = State.Driving;
   }
   
@@ -142,11 +143,11 @@ public class MoveInAnArc implements MovementInstruction {
   // A side effect of this behavior is that we can only modulate the robot's forward velocity (and only sometimes), as
   //   its angular velocity will be automatically modulated so that the the ratio
   //   of ahead-velocity to angular-velocity is equal to the ratio of arcLength to rotationAmount.
-  public void updateMaximumAngularAndForwardVelocity() {
+  public void updateMaximumAngularAndBackwardVelocity() {
     double currentVelocity = robot.getVelocity();
     
-    double desiredVelocityNextTurn = Math.min(currentVelocity + Rules.ACCELERATION, Rules.MAX_VELOCITY);
-    double desiredAngularVelocityNextTurn = (fullSectorAngle * desiredVelocityNextTurn) / arcLength;
+    double desiredVelocityNextTurn = Math.max(currentVelocity - Rules.ACCELERATION, -Rules.MAX_VELOCITY);
+    double desiredAngularVelocityNextTurn = (fullSectorAngle * Math.abs(desiredVelocityNextTurn)) / arcLength;
     
     double maximumRateOfRotationInDegrees = 10 - 0.75 * Math.abs(desiredVelocityNextTurn);
     double maximumRateOfRotationInRadians = Math.toRadians(maximumRateOfRotationInDegrees);
@@ -157,9 +158,9 @@ public class MoveInAnArc implements MovementInstruction {
       // we compute the maximum forward velocity like this:
       // (rotationAmount * V) / arcLength <= (PI/180)(10 - 0.75 * abs(V))
       // and then solve for V: V = (10 * Math.PI * arcLength) / ((180 * rotationAmount) + (Math.PI * arcLength * 0.75))
-      double maximumForwardVelocityToMaintainTurn = (10 * Math.PI * arcLength) / ((180 * fullSectorAngle) + (Math.PI * arcLength * 0.75));
-      double angularVelocityToMaintainTurn = (fullSectorAngle * maximumForwardVelocityToMaintainTurn) / arcLength;
-      robot.setMaxVelocity(maximumForwardVelocityToMaintainTurn);
+      double maximumBackwardVelocityToMaintainTurn = (10 * Math.PI * arcLength) / ((180 * fullSectorAngle) + (Math.PI * arcLength * 0.75));
+      double angularVelocityToMaintainTurn = (fullSectorAngle * maximumBackwardVelocityToMaintainTurn) / arcLength;
+      robot.setMaxVelocity(maximumBackwardVelocityToMaintainTurn);
       robot.setMaxTurnRateRadians(angularVelocityToMaintainTurn);
     } else {
       // we get to use our desired maximum angular velocity and forward velocity!

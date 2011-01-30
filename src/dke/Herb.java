@@ -63,18 +63,26 @@ public class Herb extends DkeRobot {
     // This is simpler since the precise angle your gun can move in one tick
     // depends on where your robot is turning.
     fireTime = getTime() + 1;
+//    execute();
   }
 
   @Override
   public void onHitByBullet(HitByBulletEvent e) {
-    setBack(20);
-    execute();
+//    setBack(20);
+//    execute();
   }
 
   @Override
   public void onHitWall(HitWallEvent e) {
-    setBack(20);
-    execute();
+//    setBack(20);
+//    execute();
+  }
+
+  @Override
+  public void onHitRobot(HitRobotEvent e) {
+    aimFire(currentAbsoluteHeading() + e.getBearingRadians());
+//    setBack(20);
+//    execute();
   }
 
   @Override

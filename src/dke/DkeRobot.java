@@ -215,6 +215,10 @@ public class DkeRobot extends AdvancedRobot {
   public MoveInAnArc moveInAnArc(double x, double y, Direction directionOfConcavity, double sagittaLength) {
     return new MoveInAnArc(this, new Point2D.Double(x, y), directionOfConcavity, sagittaLength);
   }
+
+  public MoveInAnArcBackward moveInAnArcBackward(double x, double y, Direction directionOfConcavity, double sagittaLength) {
+    return new MoveInAnArcBackward(this, new Point2D.Double(x, y), directionOfConcavity, sagittaLength);
+  }
   
   public void setMaxTurnRateRadians(double newMaxTurnRateInRadians) {
     setMaxTurnRate(Math.toDegrees(newMaxTurnRateInRadians));

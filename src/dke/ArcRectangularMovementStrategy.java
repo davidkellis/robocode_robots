@@ -59,19 +59,19 @@ public class ArcRectangularMovementStrategy implements MovementStrategy {
     Point2D.Double pos = robot.currentCoords();
     switch(dir) {
     case North:
-      currentMovementInstruction = robot.moveInAnArc(pos.x, robot.northWall - wallBufferWidth, Direction.Right, 50);
+      currentMovementInstruction = robot.moveInAnArcBackward(pos.x, robot.northWall - wallBufferWidth, Direction.Right, 100);
       currentState = State.DrivingNorth;
       break;
     case South:
-      currentMovementInstruction = robot.moveInAnArc(pos.x, wallBufferWidth, Direction.Right, 50);
+      currentMovementInstruction = robot.moveInAnArcBackward(pos.x, wallBufferWidth, Direction.Right, 100);
       currentState = State.DrivingSouth;
       break;
     case East:
-      currentMovementInstruction = robot.moveInAnArc(robot.eastWall - wallBufferWidth, pos.y, Direction.Right, 50);
+      currentMovementInstruction = robot.moveInAnArc(robot.eastWall - wallBufferWidth, pos.y, Direction.Right, 100);
       currentState = State.DrivingEast;
       break;
     case West:
-      currentMovementInstruction = robot.moveInAnArc(wallBufferWidth, pos.y, Direction.Right, 50);
+      currentMovementInstruction = robot.moveInAnArc(wallBufferWidth, pos.y, Direction.Right, 100);
       currentState = State.DrivingWest;
       break;
     }
