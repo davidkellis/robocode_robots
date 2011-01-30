@@ -4,7 +4,6 @@ import java.awt.geom.Point2D;
 
 import robocode.AdvancedRobot;
 import robocode.Rules;
-import robocode.util.Utils;
 
 public class DkeRobot extends AdvancedRobot {
   public static double PI = Math.PI;
@@ -149,35 +148,9 @@ public class DkeRobot extends AdvancedRobot {
     return 0.0;
   }
 
-//  public boolean isNearWall(double bufferZoneWidth) {
-//    Point2D.Double pos = currentCoords();
-//    if (pos.x < bufferZoneWidth) {
-//      return true;
-//    } else if (pos.x > (eastWall - bufferZoneWidth)) {
-//      return true;
-//    } else if (pos.y < bufferZoneWidth) {
-//      return true;
-//    } else if (pos.y > (northWall - bufferZoneWidth)) {
-//      return true;
-//    }
-//    return false;
-//  }
-
   public Point2D.Double currentCoords() {
     return new Point2D.Double(getX(), getY());
   }
-
-  // points the robot toward the cardinal direction that most closely
-  // represents the direction of the given absolute heading
-//  public void turnToCardinalDirectionNearestHeading(double absHeading) {
-//    double headingRemainder = absHeading % halfPI;
-//    if (headingRemainder < quarterPI) { // turn left by headingRemainder radians
-//      setTurnLeftRadians(headingRemainder);
-//    } else { // turn right by (halfPI - headingRemainder) radians
-//      setTurnRightRadians(halfPI - headingRemainder);
-//    }
-//    lastMovement = MovementInstruction.Turn;
-//  }
 
   public CardinalDirection cardinalDirectionNearestHeading(double absHeading) {
     int headingQuotient = (int) Math.floor(absHeading / halfPI);

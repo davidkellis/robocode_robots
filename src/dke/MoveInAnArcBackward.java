@@ -98,7 +98,7 @@ public class MoveInAnArcBackward implements MovementInstruction {
     case Finished:
       break;
     }
-    robot.execute();
+//    robot.execute();
   }
   
   public void turnToInitialAngle() {
