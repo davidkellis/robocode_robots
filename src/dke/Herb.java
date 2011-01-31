@@ -17,6 +17,7 @@ public class Herb extends DkeRobot {
       movementStrategy.moveRobot();
       fireControlSystem.run();
       execute();
+//      System.out.println("run: " + getTime());
     }
   }
 
@@ -31,8 +32,13 @@ public class Herb extends DkeRobot {
     fireControlSystem = new SimpleFireControlSystem(this);
   }
 
+  /*
+   * IMPORTANT NOTE: It seems that the onScannedRobot() event handler fires **before** the action loop is given the opportunity to run.
+   *                 This affects how the robot should schedule its gun shots.
+   */
   @Override
   public void onScannedRobot(ScannedRobotEvent e) {
+//    System.out.println("scannedRobot: " + getTime());
     fireControlSystem.onScannedRobot(e);
   }
 
@@ -51,7 +57,7 @@ public class Herb extends DkeRobot {
   @Override
   public void onHitRobot(HitRobotEvent e) {
 //    fireControlSystem.shootAt(e.getBearingRadians());
-    fireControlSystem.target(e.getName());
+    fireControlSystem.acquireTarget(e.getName());
 //    setBack(20);
 //    execute();
   }

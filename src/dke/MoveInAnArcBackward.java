@@ -177,21 +177,25 @@ public class MoveInAnArcBackward implements MovementInstruction {
     
     g.setColor(new Color(0xff, 0x00, 0x00, 0x80));      // red
     pt = robot.pointAtBearing(0, 50);
+//    pt = robot.pointAtHeading(robot.currentAbsoluteHeading(), 50);
     g.drawLine(x, y, (int)pt.x, (int)pt.y);
 //    g.drawLine(x, y, x, y+50);
     
     g.setColor(new Color(0x00, 0xff, 0x00, 0x80));      // green
     pt = robot.pointAtBearing(robot.halfPI, 50);
+//    pt = robot.pointAtHeading(robot.currentAbsoluteHeading() + robot.halfPI, 50);
     g.drawLine(x, y, (int)pt.x, (int)pt.y);
 //    g.drawLine(x, y, x+50, y);
 
     g.setColor(new Color(0x00, 0x00, 0xff, 0x80));      // blue
     pt = robot.pointAtBearing(robot.PI, 50);
+//    pt = robot.pointAtHeading(robot.currentAbsoluteHeading() + robot.PI, 50);
     g.drawLine(x, y, (int)pt.x, (int)pt.y);
 //    g.drawLine(x, y, x, y-50);
 
     g.setColor(new Color(0xff, 0xff, 0x00, 0x80));      // yellow
     pt = robot.pointAtBearing(robot.threePIoverTwo, 50);
+//    pt = robot.pointAtHeading(robot.currentAbsoluteHeading() + robot.threePIoverTwo, 50);
     g.drawLine(x, y, (int)pt.x, (int)pt.y);
 //    g.drawLine(x, y, x-50, y);
 
