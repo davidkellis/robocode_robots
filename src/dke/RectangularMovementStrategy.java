@@ -3,6 +3,11 @@ package dke;
 import java.awt.geom.Point2D;
 import java.util.Random;
 
+import robocode.HitByBulletEvent;
+import robocode.HitRobotEvent;
+import robocode.HitWallEvent;
+import robocode.Rules;
+
 public class RectangularMovementStrategy implements MovementStrategy {
   public enum State {
     Initial, DrivingNorth, DrivingEast, DrivingSouth, DrivingWest
@@ -14,6 +19,8 @@ public class RectangularMovementStrategy implements MovementStrategy {
   public boolean randomizeVelocity;
   public double wallBufferWidth = 150;
   public State currentState;
+  public boolean collidedWithWall;
+  public boolean collidedWithRobot;
   public MovementInstruction currentMovementInstruction;
 
   public RectangularMovementStrategy(DkeRobot robot) {
@@ -22,6 +29,8 @@ public class RectangularMovementStrategy implements MovementStrategy {
     rand = new Random();
     randomizeVelocity = false;
     currentState = State.Initial;
+    collidedWithWall = false;
+    collidedWithRobot = false;
   }
   
   public void moveRobot() {
@@ -45,7 +54,10 @@ public class RectangularMovementStrategy implements MovementStrategy {
   }
   
   public void tryToDriveToWall(CardinalDirection dir) {
-    if(currentMovementInstruction.isComplete()) {
+    if(currentMovementInstruction.isComplete() ||
+       collidedWithRobot ||
+       collidedWithWall) {
+      resetCollisionFlags();
       driveToWall(dir);
     } else {
       currentMovementInstruction.move();
@@ -78,5 +90,23 @@ public class RectangularMovementStrategy implements MovementStrategy {
   public void driveToWallNearestCurrentHeading() {
     CardinalDirection dir = robot.cardinalDirectionNearestHeading(robot.currentAbsoluteHeading());
     driveToWall(dir);
+  }
+  
+  public void onHitWall(HitWallEvent e) {
+    collidedWithWall = true;
+    robot.setMaxTurnRate(Rules.MAX_TURN_RATE_RADIANS);
+    robot.setMaxVelocity(Rules.MAX_VELOCITY);
+  }
+  public void onHitRobot(HitRobotEvent e) {
+    collidedWithRobot = true;
+    robot.setMaxTurnRate(Rules.MAX_TURN_RATE_RADIANS);
+    robot.setMaxVelocity(Rules.MAX_VELOCITY);
+  }
+  public void onHitByBullet(HitByBulletEvent e) {
+  }
+
+  public void resetCollisionFlags() {
+    collidedWithWall = false;
+    collidedWithRobot = false;
   }
 }

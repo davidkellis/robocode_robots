@@ -6,6 +6,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Random;
 
+import robocode.HitByBulletEvent;
+import robocode.HitRobotEvent;
+import robocode.HitWallEvent;
+import robocode.Rules;
+
 public class ArcRectangularMovementStrategy implements MovementStrategy {
   public enum State {
     Initial, DrivingNorth, DrivingEast, DrivingSouth, DrivingWest
@@ -15,6 +20,8 @@ public class ArcRectangularMovementStrategy implements MovementStrategy {
   public DkeRobot robot;
   public MovementInstruction lastMovement;
   public boolean randomizeVelocity;
+  public boolean collidedWithWall;
+  public boolean collidedWithRobot;
   public double wallBufferWidth = 100;
   public State currentState;
   public MovementInstruction currentMovementInstruction;
@@ -25,6 +32,8 @@ public class ArcRectangularMovementStrategy implements MovementStrategy {
     rand = new Random();
     randomizeVelocity = false;
     currentState = State.Initial;
+    collidedWithWall = false;
+    collidedWithRobot = false;
   }
   
   public void moveRobot() {
@@ -48,7 +57,10 @@ public class ArcRectangularMovementStrategy implements MovementStrategy {
   }
   
   public void tryToDriveToWall(CardinalDirection dir) {
-    if(currentMovementInstruction.isComplete()) {
+    if(currentMovementInstruction.isComplete() ||
+       collidedWithRobot ||
+       collidedWithWall) {
+      resetCollisionFlags();
       driveToWall(dir);
     } else {
       currentMovementInstruction.move();
@@ -82,7 +94,29 @@ public class ArcRectangularMovementStrategy implements MovementStrategy {
     CardinalDirection dir = robot.cardinalDirectionNearestHeading(robot.currentAbsoluteHeading());
     driveToWall(dir);
   }
+
+  public void onHitWall(HitWallEvent e) {
+    collidedWithWall = true;
+    robot.setMaxTurnRate(Rules.MAX_TURN_RATE_RADIANS);
+    robot.setMaxVelocity(Rules.MAX_VELOCITY);
+    currentState = State.Initial;
+    robot.setStop(true);
+  }
+  public void onHitRobot(HitRobotEvent e) {
+    collidedWithRobot = true;
+    robot.setMaxTurnRate(Rules.MAX_TURN_RATE_RADIANS);
+    robot.setMaxVelocity(Rules.MAX_VELOCITY);
+    currentState = State.Initial;
+    robot.setStop(true);
+  }
+  public void onHitByBullet(HitByBulletEvent e) {
+  }
   
+  public void resetCollisionFlags() {
+    collidedWithWall = false;
+    collidedWithRobot = false;
+  }
+
   public void onPaint(Graphics2D g) {
     try {
       Method m = currentMovementInstruction.getClass().getMethod("onPaint", new Class[]{Graphics2D.class});

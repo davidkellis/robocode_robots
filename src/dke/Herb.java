@@ -44,22 +44,20 @@ public class Herb extends DkeRobot {
 
   @Override
   public void onHitByBullet(HitByBulletEvent e) {
-//    setBack(20);
-//    execute();
   }
 
   @Override
   public void onHitWall(HitWallEvent e) {
-//    setBack(20);
-//    execute();
+    movementStrategy.onHitWall(e);
+    execute();
   }
 
   @Override
   public void onHitRobot(HitRobotEvent e) {
-//    fireControlSystem.shootAt(e.getBearingRadians());
     fireControlSystem.acquireTarget(e.getName());
-//    setBack(20);
-//    execute();
+    fireControlSystem.trackTarget(e.getBearingRadians());
+    movementStrategy.onHitRobot(e);
+    execute();
   }
 
   @Override

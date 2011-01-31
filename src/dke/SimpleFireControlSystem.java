@@ -69,7 +69,7 @@ public class SimpleFireControlSystem implements FireControlSystem {
   
   public void onScannedRobot(ScannedRobotEvent e) {
     // acquire a target if we don't currently have one
-    if(currentTarget == null /* || currentTargetIsDead()*/) {
+    if(currentTarget == null || isCurrentTargetDeadOrLost()) {
       acquireTarget(e.getName());
       targetPositionLog = new ArrayList<PositionTuple>();
     }
@@ -84,6 +84,10 @@ public class SimpleFireControlSystem implements FireControlSystem {
       trackTarget(e.getBearingRadians());
       aimGun();     // aim gun every time we scan the enemy robot.
     }
+  }
+  
+  public boolean isCurrentTargetDeadOrLost() {
+    return currentState == State.ScanningForTarget;
   }
   
   public void logTargetPosition(ScannedRobotEvent e) {
