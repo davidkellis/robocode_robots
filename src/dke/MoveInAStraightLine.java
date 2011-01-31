@@ -41,7 +41,6 @@ public class MoveInAStraightLine implements MovementInstruction {
     case Finished:
       break;
     }
-    robot.execute();
   }
   
   public void turnToDestination() {

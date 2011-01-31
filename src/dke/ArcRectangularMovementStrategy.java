@@ -97,17 +97,15 @@ public class ArcRectangularMovementStrategy implements MovementStrategy {
 
   public void onHitWall(HitWallEvent e) {
     collidedWithWall = true;
-    robot.setMaxTurnRate(Rules.MAX_TURN_RATE_RADIANS);
+    robot.setMaxTurnRateRadians(Rules.MAX_TURN_RATE_RADIANS);
     robot.setMaxVelocity(Rules.MAX_VELOCITY);
-    currentState = State.Initial;
-    robot.setStop(true);
+    moveRobot();
   }
   public void onHitRobot(HitRobotEvent e) {
     collidedWithRobot = true;
-    robot.setMaxTurnRate(Rules.MAX_TURN_RATE_RADIANS);
+    robot.setMaxTurnRateRadians(Rules.MAX_TURN_RATE_RADIANS);
     robot.setMaxVelocity(Rules.MAX_VELOCITY);
-    currentState = State.Initial;
-    robot.setStop(true);
+    moveRobot();
   }
   public void onHitByBullet(HitByBulletEvent e) {
   }

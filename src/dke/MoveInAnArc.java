@@ -97,7 +97,6 @@ public class MoveInAnArc implements MovementInstruction {
     case Finished:
       break;
     }
-//    robot.execute();
   }
   
   public void turnToInitialAngle() {

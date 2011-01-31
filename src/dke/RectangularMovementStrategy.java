@@ -94,13 +94,15 @@ public class RectangularMovementStrategy implements MovementStrategy {
   
   public void onHitWall(HitWallEvent e) {
     collidedWithWall = true;
-    robot.setMaxTurnRate(Rules.MAX_TURN_RATE_RADIANS);
+    robot.setMaxTurnRateRadians(Rules.MAX_TURN_RATE_RADIANS);
     robot.setMaxVelocity(Rules.MAX_VELOCITY);
+    moveRobot();
   }
   public void onHitRobot(HitRobotEvent e) {
     collidedWithRobot = true;
-    robot.setMaxTurnRate(Rules.MAX_TURN_RATE_RADIANS);
+    robot.setMaxTurnRateRadians(Rules.MAX_TURN_RATE_RADIANS);
     robot.setMaxVelocity(Rules.MAX_VELOCITY);
+    moveRobot();
   }
   public void onHitByBullet(HitByBulletEvent e) {
   }

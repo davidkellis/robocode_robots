@@ -49,7 +49,6 @@ public class Herb extends DkeRobot {
   @Override
   public void onHitWall(HitWallEvent e) {
     movementStrategy.onHitWall(e);
-    execute();
   }
 
   @Override
@@ -57,7 +56,6 @@ public class Herb extends DkeRobot {
     fireControlSystem.acquireTarget(e.getName());
     fireControlSystem.trackTarget(e.getBearingRadians());
     movementStrategy.onHitRobot(e);
-    execute();
   }
 
   @Override
