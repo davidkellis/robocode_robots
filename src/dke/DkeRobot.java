@@ -56,9 +56,12 @@ public class DkeRobot extends AdvancedRobot {
   // The x-axis in robocode points straight up, which is what we normally consider the y-axis. So, our computation of rise and run
   // must take into account our coordinate system and clockwise direction convention.
   public double headingToPoint(Point2D.Double destinationPoint) {
-    Point2D.Double currentPos = currentCoords();
-    double rise = destinationPoint.x - currentPos.x;
-    double run = destinationPoint.y - currentPos.y;
+    return headingToPoint(destinationPoint, currentCoords());
+  }
+
+  public double headingToPoint(Point2D.Double destinationPoint, Point2D.Double originPoint) {
+    double rise = destinationPoint.x - originPoint.x;
+    double run = destinationPoint.y - originPoint.y;
     double angleRelativeToAbsoluteZero = Math.atan2(rise, run);     // this is a bearing: -PI <= angle < PI
     if(angleRelativeToAbsoluteZero < 0) {
       return angleRelativeToAbsoluteZero + twoPI;
@@ -66,12 +69,20 @@ public class DkeRobot extends AdvancedRobot {
       return angleRelativeToAbsoluteZero;
     }
   }
-  
+
   // Returns a rotation amount in Radians.
   //   A positive return value indicates that the robot should turn right.
   //   A negative return value indicates that the robot should turn left.
   public double bearingToPoint(Point2D.Double destinationPoint) {
-    double diff = headingToPoint(destinationPoint) - currentAbsoluteHeading();
+    return bearingToPoint(destinationPoint, currentCoords());
+  }
+  
+  public double bearingToPoint(Point2D.Double destinationPoint, Point2D.Double originPoint) {
+    return bearingToPoint(destinationPoint, originPoint, currentAbsoluteHeading());
+  }
+
+  public double bearingToPoint(Point2D.Double destinationPoint, Point2D.Double originPoint, double originHeading) {
+    double diff = headingToPoint(destinationPoint, originPoint) - originHeading;
     if(diff > PI) {
       return diff - twoPI;
     } else if(diff < -PI) {
@@ -80,7 +91,7 @@ public class DkeRobot extends AdvancedRobot {
       return diff;
     }
   }
-  
+
   public Point2D.Double pointAtHeading(double heading, double distance) {
     return pointAtHeading(heading, distance, currentCoords());
   }

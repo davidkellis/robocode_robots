@@ -3,13 +3,13 @@ package dke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import robocode.Bullet;
 import robocode.ScannedRobotEvent;
 import robocode.util.Utils;
 
-public class SimpleFireControlSystem implements FireControlSystem {
+public class StateLoggingFireControlSystem implements FireControlSystem {
   public enum State {
     Initial, ScanningForTarget, TargetAquired
   }
@@ -18,25 +18,26 @@ public class SimpleFireControlSystem implements FireControlSystem {
   public State currentState;
 
   public long timeTargetLastSeen;
+  public long timeLastShotFired;
   public long fireTime;
   public double firePower;
   public double radarScanWidthMultiplier;
   public String currentTarget;
-  public ArrayList<PositionTuple> targetPositionLog;
-  public int numberOfObservationsToAverage;
-  public LinearTargetingModel targetingModel;
+  public HashMap<String, EnvironmentStateSequence> environmentStateLog;
+  public TargetingModel targetingModel;
 
-  public SimpleFireControlSystem(DkeRobot robot) {
+  public StateLoggingFireControlSystem(DkeRobot robot) {
     this.robot = robot;
-    targetingModel = new LinearTargetingModel(robot);
+//    targetingModel = new LinearTargetingModel(robot, 2);
+    targetingModel = new KNNTargetingModel(robot, 1);
     currentState = State.Initial;
     fireTime = 10000;
     firePower = 2.001;
     radarScanWidthMultiplier = 1.7;
     timeTargetLastSeen = 0;
+    timeLastShotFired = 0;
     currentTarget = null;
-    targetPositionLog = new ArrayList<PositionTuple>();
-    numberOfObservationsToAverage = 2;
+    environmentStateLog = new HashMap<String, EnvironmentStateSequence>();
   }
   
   /*
@@ -68,14 +69,17 @@ public class SimpleFireControlSystem implements FireControlSystem {
   }
   
   public void onScannedRobot(ScannedRobotEvent e) {
+    String enemyRobotName = e.getName();
     // acquire a target if we don't currently have one
     if(currentTarget == null || isCurrentTargetDeadOrLost()) {
-      acquireTarget(e.getName());
-      targetPositionLog = new ArrayList<PositionTuple>();
+      acquireTarget(enemyRobotName);
+      if(!environmentStateLog.containsKey(enemyRobotName)) {
+        environmentStateLog.put(enemyRobotName, new EnvironmentStateSequence());
+      }
     }
     
     // if we've just scanned the acquired target, log the enemy position information, then target them, and fire.
-    if(e.getName().equals(currentTarget)) {
+    if(enemyRobotName.equals(currentTarget)) {
       currentState = State.TargetAquired;
       timeTargetLastSeen = e.getTime();
       
@@ -91,10 +95,16 @@ public class SimpleFireControlSystem implements FireControlSystem {
   }
   
   public void logTargetPosition(ScannedRobotEvent e) {
-    targetPositionLog.add(new PositionTuple(robot.pointAtBearing(e.getBearingRadians(), e.getDistance()),
-                                            e.getHeadingRadians(),
-                                            e.getVelocity(),
-                                            e.getTime()));
+    String enemyRobotName = e.getName();
+    if(!environmentStateLog.containsKey(enemyRobotName)) {
+      environmentStateLog.put(enemyRobotName, new EnvironmentStateSequence());
+    }
+    RobotStateTuple enemyRobotState = new RobotStateTuple(robot.pointAtBearing(e.getBearingRadians(), e.getDistance()),
+                                                          e.getHeadingRadians(),
+                                                          e.getVelocity());
+    RobotStateTuple selfRobotState = new RobotStateTuple(robot.currentCoords(), robot.currentAbsoluteHeading(), robot.getVelocity(), e.getTime() - timeLastShotFired);
+    EnvironmentStateTuple env = new EnvironmentStateTuple(enemyRobotState, selfRobotState, e.getTime());
+    environmentStateLog.get(enemyRobotName).add(env);
   }
   
   public void trackTarget(double targetBearing) {
@@ -114,17 +124,13 @@ public class SimpleFireControlSystem implements FireControlSystem {
   
   // this method tries to figure out where the enemy robot will be in the future, aims at that position, then fires.
   public void aimGun() {
-    if (targetPositionLog.size() > 0) {
-      ArrayList<Double> mostRecentEnemyHeadings = new ArrayList<Double>();
-      for(int i = Math.max(targetPositionLog.size() - numberOfObservationsToAverage, 0); i < targetPositionLog.size(); i++) {
-        mostRecentEnemyHeadings.add(Double.valueOf(targetPositionLog.get(i).heading));
-      }
-      double averageHeadingOfBadGuy = averageAngles(mostRecentEnemyHeadings);
+    if (environmentStateLog.size() > 0) {
+      EnvironmentStateSequence eseq = environmentStateLog.get(currentTarget);
+      RobotStateTuple lastKnown = eseq.lastEnemyRobotState();
       
-      // assuming that the bad guy stays at his average heading, then we compute his future position as follows.
-      PositionTuple lastKnownPositionInfo = targetPositionLog.get(targetPositionLog.size() - 1);
+      setFirepower(robot.currentCoords().distance(lastKnown.position));
       
-      Double gunHeading = targetingModel.target(lastKnownPositionInfo.position, averageHeadingOfBadGuy, lastKnownPositionInfo.velocity, firePower);
+      Double gunHeading = targetingModel.target(eseq, firePower);
       if(gunHeading != null /*&& robot.getGunTurnRemainingRadians() == 0*/) {
         aimAndFireAtHeading(gunHeading);
       }
@@ -155,7 +161,18 @@ public class SimpleFireControlSystem implements FireControlSystem {
   }
   
   public Bullet fireGun() {
+    timeLastShotFired = robot.getTime();
     return robot.setFireBullet(firePower);
+  }
+  
+  public void setFirepower(double distanceToEnemy) {
+    if(distanceToEnemy < 100) {
+      firePower = 3.0;
+    } else if (firePower < 400) {
+      firePower = 2.0;
+    } else {
+      firePower = 1.01;
+    }
   }
   
   public void onPaint(Graphics2D g) {
@@ -166,20 +183,5 @@ public class SimpleFireControlSystem implements FireControlSystem {
     pt = robot.pointAtHeading(robot.getGunHeadingRadians(), 800);
     g.setColor(new Color(0xff, 0x14, 0x93, 0x80));      // deep pink
     g.drawLine(x, y, (int)pt.getX(), (int)pt.getY());
-  }
-  
-  // found this formula at: http://stackoverflow.com/questions/491738/how-do-you-calculate-the-average-of-a-set-of-angles
-  public double averageAngles(ArrayList<Double> anglesInRadians) {
-    double sumOfSines = 0;
-    double sumOfCosines = 0;
-    for (Double angle : anglesInRadians) {
-      sumOfCosines += Math.cos(angle);
-      sumOfSines += Math.sin(angle);
-    }
-    
-    // The line below would be atan2(sumOfCosines, sumOfSines) if the signature of atan2 were atan2(x, y), 
-    // but Java's atan2 method signature is atan2(y, x), so we have to call the function with the 
-    // arguments reversed: atan2(sumOfSines, sumOfCosines).
-    return Math.atan2(sumOfSines, sumOfCosines);
   }
 }

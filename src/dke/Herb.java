@@ -29,7 +29,7 @@ public class Herb extends DkeRobot {
     //movementStrategy = new RectangularMovementStrategy(this);
     movementStrategy = new ArcRectangularMovementStrategy(this);
     
-    fireControlSystem = new SimpleFireControlSystem(this);
+    fireControlSystem = new StateLoggingFireControlSystem(this);
   }
 
   /*

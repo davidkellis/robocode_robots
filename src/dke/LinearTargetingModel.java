@@ -1,23 +1,36 @@
 package dke;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 import robocode.Rules;
 
-public class LinearTargetingModel {
+public class LinearTargetingModel implements TargetingModel {
   DkeRobot robot;
+  public int numberOfObservationsToAverage;
   
-  public LinearTargetingModel(DkeRobot robot) {
+  public LinearTargetingModel(DkeRobot robot, int numberOfObservationsToAverage) {
     this.robot = robot;
-  }
-  
-  public Double target(Point2D.Double enemyPosition, double enemyRobotHeading, double enemyVelocity) {
-    return target(enemyPosition, enemyRobotHeading, enemyVelocity, 2.0);
+    this.numberOfObservationsToAverage = numberOfObservationsToAverage;
   }
   
   // This method was taken verbatim from http://robowiki.net/wiki/Linear_Targeting
   // This method returns the gun heading that the fire control system need to turn the gun to, and then fire.
-  public Double target(Point2D.Double enemyPosition, double enemyRobotHeading, double enemyVelocity, double desiredFirepower) {
+  @Override
+  public Double target(EnvironmentStateSequence eseq, double desiredFirepower) {
+    ArrayList<Double> mostRecentEnemyHeadings = eseq.getEnemyHeadings(numberOfObservationsToAverage);
+    RobotStateTuple lastKnown = eseq.lastEnemyRobotState();
+    Point2D.Double enemyPosition = lastKnown.position;
+    
+    double enemyRobotHeading = averageAngles(mostRecentEnemyHeadings);
+    
+    // compute the bad guy's average velocity
+    double enemyVelocity = 0;
+    for(double v : eseq.getEnemyVelocities(numberOfObservationsToAverage)) {
+      enemyVelocity += v;
+    }
+    enemyVelocity /= numberOfObservationsToAverage;
+    
     // Variables prefixed with e- refer to enemy, b- refer to bullet and r- refer to robot
     final double rX = robot.getX(),
                  rY = robot.getY(),
@@ -65,5 +78,20 @@ public class LinearTargetingModel {
   
   public double limit(double value, double min, double max) {
     return Math.min(max, Math.max(min, value));
+  }
+  
+  // found this formula at: http://stackoverflow.com/questions/491738/how-do-you-calculate-the-average-of-a-set-of-angles
+  public double averageAngles(ArrayList<Double> anglesInRadians) {
+    double sumOfSines = 0;
+    double sumOfCosines = 0;
+    for (Double angle : anglesInRadians) {
+      sumOfCosines += Math.cos(angle);
+      sumOfSines += Math.sin(angle);
+    }
+    
+    // The line below would be atan2(sumOfCosines, sumOfSines) if the signature of atan2 were atan2(x, y), 
+    // but Java's atan2 method signature is atan2(y, x), so we have to call the function with the 
+    // arguments reversed: atan2(sumOfSines, sumOfCosines).
+    return Math.atan2(sumOfSines, sumOfCosines);
   }
 }
