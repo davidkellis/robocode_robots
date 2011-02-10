@@ -3,6 +3,7 @@ package dke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import robocode.Bullet;
@@ -165,8 +166,10 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
   public void setFirepower(double distanceToEnemy) {
     if(distanceToEnemy < 200) {
       firePower = 3.0;
-    } else if (firePower < 400) {
+    } else if (firePower < 300) {
       firePower = 2.0;
+    } else if (firePower < 500) {
+      firePower = 1.4;
     } else {
       firePower = 1.01;
     }
@@ -180,5 +183,12 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
     pt = robot.pointAtHeading(robot.getGunHeadingRadians(), 800);
     g.setColor(new Color(0xff, 0x14, 0x93, 0x80));      // deep pink
     g.drawLine(x, y, (int)pt.getX(), (int)pt.getY());
+    
+    ArrayList<Point2D.Double> projectedEnemyPosition = movementModel.predictFutureMovement(currentTarget, 35);
+    double half = DkeRobot.ROBOT_WIDTH / 2;
+    for(int i = 0; i < projectedEnemyPosition.size(); i++) {
+      pt = projectedEnemyPosition.get(i);
+      g.drawRect((int)(pt.x - half), (int)(pt.y - half), (int)DkeRobot.ROBOT_WIDTH, (int)DkeRobot.ROBOT_HEIGHT);
+    }
   }
 }

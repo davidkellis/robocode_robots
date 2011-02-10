@@ -17,7 +17,6 @@ public class Herb extends DkeRobot {
       movementStrategy.moveRobot();
       fireControlSystem.run();
       execute();
-//      System.out.println("run: " + getTime());
     }
   }
 
@@ -38,7 +37,6 @@ public class Herb extends DkeRobot {
    */
   @Override
   public void onScannedRobot(ScannedRobotEvent e) {
-//    System.out.println("scannedRobot: " + getTime());
     fireControlSystem.onScannedRobot(e);
   }
 

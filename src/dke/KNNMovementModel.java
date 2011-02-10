@@ -45,7 +45,7 @@ public class KNNMovementModel implements MovementModel {
       
       if(currentState != null && stateTree != null) {
         // 1. find index of the environment state tuple(s) that most closely resemble(s) (i.e. is/are the nearest neighbor(s) of) the current/most-recent environment state.
-        List<Entry<Integer>> nearestNeighbors = stateTree.nearestNeighbor(currentState.featureVector(), Math.max(k, numberOfPositionsToPredict + 1), false);
+        List<Entry<Integer>> nearestNeighbors = stateTree.nearestNeighbor(currentState.featureVector(), Math.max(k, numberOfPositionsToPredict + 1), true);
         
         if(nearestNeighbors.size() > 0) {
           // find the nearest neighbor that was observed longer than 'numberOfPositionsToPredict' turns ago.

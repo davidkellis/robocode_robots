@@ -11,7 +11,7 @@ public class KNNTargetingModel implements TargetingModel {
   
   public KNNTargetingModel(DkeRobot robot) {
     this.robot = robot;
-    this.numberOfPositionsToProjectIntoFuture = 25;
+    this.numberOfPositionsToProjectIntoFuture = 35;
   }
   
   // This method returns the gun heading that the fire control system need to turn the gun to, and then fire.

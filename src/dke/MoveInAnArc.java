@@ -168,35 +168,34 @@ public class MoveInAnArc implements MovementInstruction {
   }
   
   public void onPaint(Graphics2D g) {
-//    g.drawOval(x, y, 2 * circleRadius, 2 * circleRadius);
-    int x = (int)robot.getX();
-    int y = (int)robot.getY();
-    Point2D.Double pt;
-    
-    g.setColor(new Color(0xff, 0x00, 0x00, 0x80));      // red
-    pt = robot.pointAtBearing(0, 50);
-    g.drawLine(x, y, (int)pt.x, (int)pt.y);
-//    g.drawLine(x, y, x, y+50);
-    
-    g.setColor(new Color(0x00, 0xff, 0x00, 0x80));      // green
-    pt = robot.pointAtBearing(Utils.halfPI, 50);
-    g.drawLine(x, y, (int)pt.x, (int)pt.y);
-//    g.drawLine(x, y, x+50, y);
-
-    g.setColor(new Color(0x00, 0x00, 0xff, 0x80));      // blue
-    pt = robot.pointAtBearing(Utils.PI, 50);
-    g.drawLine(x, y, (int)pt.x, (int)pt.y);
-//    g.drawLine(x, y, x, y-50);
-
-    g.setColor(new Color(0xff, 0xff, 0x00, 0x80));      // yellow
-    pt = robot.pointAtBearing(Utils.threePIoverTwo, 50);
-    g.drawLine(x, y, (int)pt.x, (int)pt.y);
-//    g.drawLine(x, y, x-50, y);
-
-    g.setColor(new Color(0x00, 0xff, 0xff, 0x80));      // cyan
-    g.drawLine((int)origin.x, (int)origin.y, (int)pointOnTangentLine.getX(), (int)pointOnTangentLine.getY());
-
-    g.setColor(new Color(0xff, 0x45, 0x00, 0x80));      // orange
-    g.drawLine(x, y, (int)destination.getX(), (int)destination.getY());
+//    int x = (int)robot.getX();
+//    int y = (int)robot.getY();
+//    Point2D.Double pt;
+//    
+//    g.setColor(new Color(0xff, 0x00, 0x00, 0x80));      // red
+//    pt = robot.pointAtBearing(0, 50);
+//    g.drawLine(x, y, (int)pt.x, (int)pt.y);
+////    g.drawLine(x, y, x, y+50);
+//    
+//    g.setColor(new Color(0x00, 0xff, 0x00, 0x80));      // green
+//    pt = robot.pointAtBearing(Utils.halfPI, 50);
+//    g.drawLine(x, y, (int)pt.x, (int)pt.y);
+////    g.drawLine(x, y, x+50, y);
+//
+//    g.setColor(new Color(0x00, 0x00, 0xff, 0x80));      // blue
+//    pt = robot.pointAtBearing(Utils.PI, 50);
+//    g.drawLine(x, y, (int)pt.x, (int)pt.y);
+////    g.drawLine(x, y, x, y-50);
+//
+//    g.setColor(new Color(0xff, 0xff, 0x00, 0x80));      // yellow
+//    pt = robot.pointAtBearing(Utils.threePIoverTwo, 50);
+//    g.drawLine(x, y, (int)pt.x, (int)pt.y);
+////    g.drawLine(x, y, x-50, y);
+//
+//    g.setColor(new Color(0x00, 0xff, 0xff, 0x80));      // cyan
+//    g.drawLine((int)origin.x, (int)origin.y, (int)pointOnTangentLine.getX(), (int)pointOnTangentLine.getY());
+//
+//    g.setColor(new Color(0xff, 0x45, 0x00, 0x80));      // orange
+//    g.drawLine(x, y, (int)destination.getX(), (int)destination.getY());
   }
 }
