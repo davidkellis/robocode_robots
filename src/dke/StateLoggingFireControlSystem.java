@@ -23,13 +23,14 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
   public double firePower;
   public double radarScanWidthMultiplier;
   public String currentTarget;
-  public HashMap<String, EnvironmentStateSequence> environmentStateLog;
+  public MovementModel movementModel;
   public TargetingModel targetingModel;
 
   public StateLoggingFireControlSystem(DkeRobot robot) {
     this.robot = robot;
 //    targetingModel = new LinearTargetingModel(robot, 2);
-    targetingModel = new KNNTargetingModel(robot, 1);
+    movementModel = new KNNMovementModel(robot, 1);
+    targetingModel = new KNNTargetingModel(robot);
     currentState = State.Initial;
     fireTime = 10000;
     firePower = 2.001;
@@ -37,7 +38,6 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
     timeTargetLastSeen = 0;
     timeLastShotFired = 0;
     currentTarget = null;
-    environmentStateLog = new HashMap<String, EnvironmentStateSequence>();
   }
   
   /*
@@ -70,12 +70,10 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
   
   public void onScannedRobot(ScannedRobotEvent e) {
     String enemyRobotName = e.getName();
+    
     // acquire a target if we don't currently have one
     if(currentTarget == null || isCurrentTargetDeadOrLost()) {
       acquireTarget(enemyRobotName);
-      if(!environmentStateLog.containsKey(enemyRobotName)) {
-        environmentStateLog.put(enemyRobotName, new EnvironmentStateSequence());
-      }
     }
     
     // if we've just scanned the acquired target, log the enemy position information, then target them, and fire.
@@ -96,21 +94,16 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
   
   public void logTargetPosition(ScannedRobotEvent e) {
     String enemyRobotName = e.getName();
-    if(!environmentStateLog.containsKey(enemyRobotName)) {
-      environmentStateLog.put(enemyRobotName, new EnvironmentStateSequence());
-    }
+    
     RobotStateTuple enemyRobotState = new RobotStateTuple(robot.pointAtBearing(e.getBearingRadians(), e.getDistance()),
                                                           e.getHeadingRadians(),
                                                           e.getVelocity());
-    RobotStateTuple selfRobotState = new RobotStateTuple(robot.currentCoords(), robot.currentAbsoluteHeading(), robot.getVelocity(), e.getTime() - timeLastShotFired);
+    RobotStateTuple selfRobotState = new RobotStateTuple(robot.currentCoords(),
+                                                         robot.currentAbsoluteHeading(),
+                                                         robot.getVelocity(),
+                                                         e.getTime() - timeLastShotFired);
     EnvironmentStateTuple env = new EnvironmentStateTuple(enemyRobotState, selfRobotState, e.getTime());
-    environmentStateLog.get(enemyRobotName).add(env);
-  }
-  
-  public void trackTarget(double targetBearing) {
-    double targetHeading = robot.currentAbsoluteHeading() + targetBearing;
-    double radarBearingToTarget = targetHeading - robot.getRadarHeadingRadians();
-    robot.setTurnRadarRightRadians(radarScanWidthMultiplier * Utils.normalRelativeAngle(radarBearingToTarget));
+    movementModel.logStateObservation(enemyRobotName, env);
   }
   
   public Bullet tryToFireGun() {
@@ -122,15 +115,19 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
     return null;
   }
   
+  public void trackTarget(double targetBearing) {
+    double targetHeading = robot.currentAbsoluteHeading() + targetBearing;
+    double radarBearingToTarget = targetHeading - robot.getRadarHeadingRadians();
+    robot.setTurnRadarRightRadians(radarScanWidthMultiplier * Utils.normalRelativeAngle(radarBearingToTarget));
+  }
+  
   // this method tries to figure out where the enemy robot will be in the future, aims at that position, then fires.
   public void aimGun() {
-    if (environmentStateLog.size() > 0) {
-      EnvironmentStateSequence eseq = environmentStateLog.get(currentTarget);
-      RobotStateTuple lastKnown = eseq.lastEnemyRobotState();
+    EnvironmentStateSequence stateSeq = movementModel.getStateSequence(currentTarget);
+    if(stateSeq != null && stateSeq.last() != null) {
+      setFirepower(robot.currentCoords().distance(stateSeq.last().enemyRobot.position));
       
-      setFirepower(robot.currentCoords().distance(lastKnown.position));
-      
-      Double gunHeading = targetingModel.target(eseq, firePower);
+      Double gunHeading = targetingModel.target(currentTarget, movementModel, firePower);
       if(gunHeading != null /*&& robot.getGunTurnRemainingRadians() == 0*/) {
         aimAndFireAtHeading(gunHeading);
       }
@@ -166,7 +163,7 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
   }
   
   public void setFirepower(double distanceToEnemy) {
-    if(distanceToEnemy < 100) {
+    if(distanceToEnemy < 200) {
       firePower = 3.0;
     } else if (firePower < 400) {
       firePower = 2.0;

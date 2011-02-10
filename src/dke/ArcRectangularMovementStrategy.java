@@ -91,7 +91,7 @@ public class ArcRectangularMovementStrategy implements MovementStrategy {
   }
   
   public void driveToWallNearestCurrentHeading() {
-    CardinalDirection dir = robot.cardinalDirectionNearestHeading(robot.currentAbsoluteHeading());
+    CardinalDirection dir = Utils.cardinalDirectionNearestHeading(robot.currentAbsoluteHeading());
     driveToWall(dir);
   }
 

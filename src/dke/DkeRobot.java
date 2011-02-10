@@ -6,12 +6,6 @@ import robocode.AdvancedRobot;
 import robocode.Rules;
 
 public class DkeRobot extends AdvancedRobot {
-  public static double PI = Math.PI;
-  public static double halfPI = Math.PI / 2;
-  public static double quarterPI = Math.PI / 4;
-  public static double twoPI = 2 * Math.PI;
-  public static double threePIoverTwo = 3 * Math.PI / 2.0;
-  
   public static double ROBOT_WIDTH = 16;
   public static double ROBOT_HEIGHT = 16;
   
@@ -56,18 +50,7 @@ public class DkeRobot extends AdvancedRobot {
   // The x-axis in robocode points straight up, which is what we normally consider the y-axis. So, our computation of rise and run
   // must take into account our coordinate system and clockwise direction convention.
   public double headingToPoint(Point2D.Double destinationPoint) {
-    return headingToPoint(destinationPoint, currentCoords());
-  }
-
-  public double headingToPoint(Point2D.Double destinationPoint, Point2D.Double originPoint) {
-    double rise = destinationPoint.x - originPoint.x;
-    double run = destinationPoint.y - originPoint.y;
-    double angleRelativeToAbsoluteZero = Math.atan2(rise, run);     // this is a bearing: -PI <= angle < PI
-    if(angleRelativeToAbsoluteZero < 0) {
-      return angleRelativeToAbsoluteZero + twoPI;
-    } else {
-      return angleRelativeToAbsoluteZero;
-    }
+    return Utils.headingToPoint(destinationPoint, currentCoords());
   }
 
   // Returns a rotation amount in Radians.
@@ -78,76 +61,15 @@ public class DkeRobot extends AdvancedRobot {
   }
   
   public double bearingToPoint(Point2D.Double destinationPoint, Point2D.Double originPoint) {
-    return bearingToPoint(destinationPoint, originPoint, currentAbsoluteHeading());
-  }
-
-  public double bearingToPoint(Point2D.Double destinationPoint, Point2D.Double originPoint, double originHeading) {
-    double diff = headingToPoint(destinationPoint, originPoint) - originHeading;
-    if(diff > PI) {
-      return diff - twoPI;
-    } else if(diff < -PI) {
-      return diff + twoPI;
-    } else {
-      return diff;
-    }
+    return Utils.bearingToPoint(destinationPoint, originPoint, currentAbsoluteHeading());
   }
 
   public Point2D.Double pointAtHeading(double heading, double distance) {
-    return pointAtHeading(heading, distance, currentCoords());
-  }
-  
-  public Point2D.Double pointAtHeading(double heading, double distance, Point2D.Double originPosition) {
-    double pX = originPosition.getX() + distance * Math.sin(heading);
-    double pY = originPosition.getY() + distance * Math.cos(heading);
-    return new Point2D.Double(pX, pY);
-    
-//    heading = heading % twoPI;     // normalize heading to something in the range: 0 <= heading < 2*PI
-//    double x, y;
-//    
-//    // domain of Tangent function is undefined at 90, 270
-//    if(heading == halfPI) {                 // heading is 90, move right
-//      x = originPosition.x + distance;
-//      y = originPosition.y;
-//    } else if (heading == threePIoverTwo) { // heading is 270, move left
-//      x = originPosition.x - distance;
-//      y = originPosition.y;
-//    } else {                                // domain of Tangent function is defined at all other angles.
-//      double ratioOppOverAdj = Math.tan(heading);
-//      
-//      double adj = Math.sqrt(Math.pow(distance, 2) / (Math.pow(ratioOppOverAdj, 2) + 1));
-//      double opp = Math.sqrt(Math.pow(distance, 2) - Math.pow(adj, 2));
-//      
-//      // ****** NOTE ******
-//      // The adjacent length, adj, represents the change in Y
-//      // The opposite length, opp, represents the change in X
-//      
-//      if(heading > PI) {                    // destination point is left of the bot's current position
-//        if(heading > threePIoverTwo) {      // destination point is above the bot's current position
-//          x = originPosition.x - opp;
-//          y = originPosition.y + adj;
-//        } else {                            // destination point is below the bot's current position
-//          x = originPosition.x - opp;
-//          y = originPosition.y - adj;
-//        }
-//      } else {                              // destination point will be to the right of the bot's current position
-//        if(heading < halfPI) {              // destination point is above the bot's current position
-//          x = originPosition.x + opp;
-//          y = originPosition.y + adj;
-//        } else {                            // destination point is below the bot's current position
-//          x = originPosition.x + opp;
-//          y = originPosition.y - adj;
-//        }
-//      }
-//    }
-//    return new Point2D.Double(x, y);
+    return Utils.pointAtHeading(heading, distance, currentCoords());
   }
   
   public Point2D.Double pointAtBearing(double bearing, double distance) {
     return pointAtHeading(currentAbsoluteHeading() + bearing, distance);
-  }
-
-  public Point2D.Double pointAtBearing(double bearing, double distance, Point2D.Double originPosition, double originHeading) {
-    return pointAtHeading(originHeading + bearing, distance, originPosition);
   }
 
   public double distanceFromWall(CardinalDirection directionOfWall) {
@@ -169,35 +91,6 @@ public class DkeRobot extends AdvancedRobot {
     return new Point2D.Double(getX(), getY());
   }
 
-  public CardinalDirection cardinalDirectionNearestHeading(double absHeading) {
-    int headingQuotient = (int) Math.floor(absHeading / halfPI);
-    double headingRemainder = absHeading % halfPI;
-    if (headingRemainder < quarterPI) {
-      switch (headingQuotient) {
-      case 0:
-        return CardinalDirection.North;
-      case 1:
-        return CardinalDirection.East;
-      case 2:
-        return CardinalDirection.South;
-      case 3:
-        return CardinalDirection.West;
-      }
-    } else {
-      switch (headingQuotient) {
-      case 0:
-        return CardinalDirection.East;
-      case 1:
-        return CardinalDirection.South;
-      case 2:
-        return CardinalDirection.West;
-      case 3:
-        return CardinalDirection.North;
-      }
-    }
-    return null;
-  }
-  
   public MoveInAStraightLine moveInAStraightLine(double x, double y) {
     return new MoveInAStraightLine(this, new Point2D.Double(x, y));
   }

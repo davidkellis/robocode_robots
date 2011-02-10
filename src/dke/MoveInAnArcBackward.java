@@ -5,7 +5,6 @@ import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 
 import robocode.Rules;
-import robocode.util.Utils;
 
 public class MoveInAnArcBackward implements MovementInstruction {
   public enum State {
@@ -106,13 +105,13 @@ public class MoveInAnArcBackward implements MovementInstruction {
     double angleBetweenChordAndTangentLine = halfOfSectorAngle;
     double bearingToStartOfTurnAngle;
     if(directionOfConcavity == Direction.Left) {
-      bearingToStartOfTurnAngle = Utils.normalRelativeAngle(bearingToDestinationInRadians - angleBetweenChordAndTangentLine + Math.PI);
+      bearingToStartOfTurnAngle = robocode.util.Utils.normalRelativeAngle(bearingToDestinationInRadians - angleBetweenChordAndTangentLine + Math.PI);
     } else {
-      bearingToStartOfTurnAngle = Utils.normalRelativeAngle(bearingToDestinationInRadians + angleBetweenChordAndTangentLine + Math.PI);
+      bearingToStartOfTurnAngle = robocode.util.Utils.normalRelativeAngle(bearingToDestinationInRadians + angleBetweenChordAndTangentLine + Math.PI);
     }
 
     // DEBUG LINE BELOW!
-    pointOnTangentLine = robot.pointAtBearing(bearingToStartOfTurnAngle, 50, robot.currentCoords(), robot.currentAbsoluteHeading());
+    pointOnTangentLine = Utils.pointAtBearing(bearingToStartOfTurnAngle, 50, robot.currentCoords(), robot.currentAbsoluteHeading());
     
     // turn the robot so that it is facing the direction of the start of the turn (if necessary)
     if(bearingToStartOfTurnAngle != 0.0) {
@@ -181,19 +180,19 @@ public class MoveInAnArcBackward implements MovementInstruction {
 //    g.drawLine(x, y, x, y+50);
     
     g.setColor(new Color(0x00, 0xff, 0x00, 0x80));      // green
-    pt = robot.pointAtBearing(robot.halfPI, 50);
+    pt = robot.pointAtBearing(Utils.halfPI, 50);
 //    pt = robot.pointAtHeading(robot.currentAbsoluteHeading() + robot.halfPI, 50);
     g.drawLine(x, y, (int)pt.x, (int)pt.y);
 //    g.drawLine(x, y, x+50, y);
 
     g.setColor(new Color(0x00, 0x00, 0xff, 0x80));      // blue
-    pt = robot.pointAtBearing(robot.PI, 50);
+    pt = robot.pointAtBearing(Utils.PI, 50);
 //    pt = robot.pointAtHeading(robot.currentAbsoluteHeading() + robot.PI, 50);
     g.drawLine(x, y, (int)pt.x, (int)pt.y);
 //    g.drawLine(x, y, x, y-50);
 
     g.setColor(new Color(0xff, 0xff, 0x00, 0x80));      // yellow
-    pt = robot.pointAtBearing(robot.threePIoverTwo, 50);
+    pt = robot.pointAtBearing(Utils.threePIoverTwo, 50);
 //    pt = robot.pointAtHeading(robot.currentAbsoluteHeading() + robot.threePIoverTwo, 50);
     g.drawLine(x, y, (int)pt.x, (int)pt.y);
 //    g.drawLine(x, y, x-50, y);
