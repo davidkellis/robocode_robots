@@ -31,7 +31,7 @@ public class KNNMovementModel implements MovementModel {
     observationSequence.add(observation);
     int indexOfObservation = observationSequence.size() - 1; 
     observationTree.addPoint(observation.featureVector(), indexOfObservation);
-    System.out.println(observationSequence.size() + " " + robot.getTime());
+//    System.out.println(observationSequence.size() + " " + robot.getTime());
   }
   
   // Returns a list of points representing the position history of the enemy robot.
