@@ -10,11 +10,13 @@ import dke.KdTree.Entry;
 public class KNNMovementModel implements MovementModel {
   public DkeRobot robot;
   int k;
+  int numberOfStatesToDiscard;
   public HashMap<String, Pair<EnvironmentStateSequence, EnvironmentStateTree>> observationLog;
   
-  public KNNMovementModel(DkeRobot robot, int kNearestNeighbors) {
+  public KNNMovementModel(DkeRobot robot, int kNearestNeighbors, int numberOfStatesToDiscard) {
     this.robot = robot;
     this.k = kNearestNeighbors;
+    this.numberOfStatesToDiscard = numberOfStatesToDiscard;
     this.observationLog = new HashMap<String, Pair<EnvironmentStateSequence, EnvironmentStateTree>>();
   }
   
@@ -31,13 +33,12 @@ public class KNNMovementModel implements MovementModel {
     observationSequence.add(observation);
     int indexOfObservation = observationSequence.size() - 1; 
     observationTree.addPoint(observation.featureVector(), indexOfObservation);
-//    System.out.println(observationSequence.size() + " " + robot.getTime());
+//    System.out.println(robot.getTime() + " @ observationSequence[" + indexOfObservation + "] = " + observation);
   }
   
   // Returns a list of points representing the position history of the enemy robot.
   // The first point represents the position that most closely resembles the enemy bot's next position.
   public ArrayList<Point2D.Double> predictFutureMovement(String enemyRobotName, int numberOfPositionsToPredict) {
-    long currentTime = robot.getTime();
     EnvironmentStateSequence stateSeq = getStateSequence(enemyRobotName);
     if(stateSeq != null) {
       EnvironmentStateTuple currentState = stateSeq.last();
@@ -45,7 +46,9 @@ public class KNNMovementModel implements MovementModel {
       
       if(currentState != null && stateTree != null) {
         // 1. find index of the environment state tuple(s) that most closely resemble(s) (i.e. is/are the nearest neighbor(s) of) the current/most-recent environment state.
-        List<Entry<Integer>> nearestNeighbors = stateTree.nearestNeighbor(currentState.featureVector(), Math.max(k, numberOfPositionsToPredict + 1), true);
+        List<Entry<Integer>> nearestNeighbors = stateTree.nearestNeighbor(currentState.featureVector(), k + numberOfStatesToDiscard, true);
+//        System.out.println(nearestNeighbors.size());
+        // NOTE: nearestNeighbors is sorted by neighbor distance, in descending order. So, the nearest neighbors are at the end of the list.
         
         if(nearestNeighbors.size() > 0) {
           // find the nearest neighbor that was observed longer than 'numberOfPositionsToPredict' turns ago.
@@ -53,12 +56,14 @@ public class KNNMovementModel implements MovementModel {
           
           // We don't want to consider any of the states that were very very recent (and therefore too-near a neighbor) as the nearest neighbor,
           // because we need some history *after* the movement.
-          for(int i = 0; i < nearestNeighbors.size(); i++) {
+          for(int i = nearestNeighbors.size() - 1; i >= 0 ; i--) {
             tempFirstIndex = nearestNeighbors.get(i);
-            if(stateSeq.get(tempFirstIndex.value).time <= currentTime - numberOfPositionsToPredict) {
+            // if the observation at index i is at least as old or older than (current time - numberOfStatesToDiscard), then we want to consider it the nearest neighbor of interest.
+            if(stateSeq.get(tempFirstIndex.value).time <= currentState.time - numberOfStatesToDiscard) {
               break;
             }
           }
+//          System.out.println(tempFirstIndex.value + ": " + stateSeq.get(tempFirstIndex.value).time + " " + currentState.time);
           
           // 2. identify the environment state tuples that immediately follow the environment state tuple found in the previous step.
           List<EnvironmentStateTuple> historicalStatesWithWhichToPredictFuture = stateSeq.slice(tempFirstIndex.value, numberOfPositionsToPredict);
@@ -71,6 +76,7 @@ public class KNNMovementModel implements MovementModel {
         }
       }
     }
+//    System.out.println("empty");
     return new ArrayList<Point2D.Double>();
   }
   

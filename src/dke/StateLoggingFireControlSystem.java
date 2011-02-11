@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import robocode.Bullet;
 import robocode.ScannedRobotEvent;
@@ -26,12 +25,14 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
   public String currentTarget;
   public MovementModel movementModel;
   public TargetingModel targetingModel;
+  public int numberOfEnemyStepsToPredict;
+  public int numberOfEnemyStepsToDiscard;
 
   public StateLoggingFireControlSystem(DkeRobot robot) {
     this.robot = robot;
-//    targetingModel = new LinearTargetingModel(robot, 2);
-    movementModel = new KNNMovementModel(robot, 1);
-    targetingModel = new KNNTargetingModel(robot);
+    
+    numberOfEnemyStepsToPredict = 35;
+    numberOfEnemyStepsToDiscard = 35;
     currentState = State.Initial;
     fireTime = 10000;
     firePower = 2.001;
@@ -39,7 +40,11 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
     timeTargetLastSeen = 0;
     timeLastShotFired = 0;
     currentTarget = null;
-  }
+
+//  targetingModel = new LinearTargetingModel(robot, 2);
+    movementModel = new KNNMovementModel(robot, 1, numberOfEnemyStepsToDiscard);
+    targetingModel = new KNNTargetingModel(robot, numberOfEnemyStepsToPredict);
+}
   
   /*
    * IMPORTANT NOTE: It seems that the onScannedRobot() event handler fires **before** the action loop is given the opportunity to run.
@@ -103,7 +108,7 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
                                                          robot.currentAbsoluteHeading(),
                                                          robot.getVelocity(),
                                                          e.getTime() - timeLastShotFired);
-    EnvironmentStateTuple env = new EnvironmentStateTuple(enemyRobotState, selfRobotState, e.getTime());
+    EnvironmentStateTuple env = new EnvironmentStateTuple(enemyRobotState, selfRobotState, robot.getTime());     // e.getTime() keeps returning 0, so use robot.getTime() instead!
     movementModel.logStateObservation(enemyRobotName, env);
   }
   
@@ -184,7 +189,7 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
     g.setColor(new Color(0xff, 0x14, 0x93, 0x80));      // deep pink
     g.drawLine(x, y, (int)pt.getX(), (int)pt.getY());
     
-    ArrayList<Point2D.Double> projectedEnemyPosition = movementModel.predictFutureMovement(currentTarget, 35);
+    ArrayList<Point2D.Double> projectedEnemyPosition = movementModel.predictFutureMovement(currentTarget, numberOfEnemyStepsToPredict);
     double half = DkeRobot.ROBOT_WIDTH / 2;
     for(int i = 0; i < projectedEnemyPosition.size(); i++) {
       pt = projectedEnemyPosition.get(i);

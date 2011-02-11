@@ -18,7 +18,7 @@ public class EnvironmentStateTuple {
   public EnvironmentStateTuple(RobotStateTuple enemyStateTuple, RobotStateTuple selfStateTuple, long time) {
     enemyRobot = enemyStateTuple;
     self = selfStateTuple;
-    time = 0;
+    this.time = time;
   }
   
   public double[] featureVector() {
@@ -69,5 +69,9 @@ public class EnvironmentStateTuple {
     sumOfSquares = sumOfSquares.add(tempDifference.pow(2));
     
     return rootFinder.sqrt(sumOfSquares).doubleValue();
+  }
+  
+  public String toString() {
+    return "" + time;
   }
 }

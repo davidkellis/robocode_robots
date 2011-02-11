@@ -71,10 +71,15 @@ public class Herb extends DkeRobot {
       m = fireControlSystem.getClass().getMethod("onPaint", new Class[]{Graphics2D.class});
       m.invoke(fireControlSystem, new Object[]{g});
     } catch (SecurityException e) {
+      System.out.println(e.getStackTrace());
     } catch (NoSuchMethodException e) {
+      System.out.println(e.getStackTrace());
     } catch (IllegalArgumentException e) {
+      System.out.println(e.getStackTrace());
     } catch (IllegalAccessException e) {
+      System.out.println(e.getStackTrace());
     } catch (InvocationTargetException e) {
+      System.out.println(e.getStackTrace());
     }
   }
 }

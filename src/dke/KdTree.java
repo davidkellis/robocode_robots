@@ -300,6 +300,7 @@ public abstract class KdTree<T> {
 
   /**
    * Calculates the nearest 'k' points (feature vectors) to a given feature vector 'featureVector'
+   * When the sequentialSorting option is true, the return value (i.e. the List<Entry<T>>) is sorted in descending order.
    */
   //@SuppressWarnings("unchecked")
   public List<Entry<T>> nearestNeighbor(double[] featureVector, int k, boolean sequentialSorting) {
@@ -610,6 +611,7 @@ public abstract class KdTree<T> {
 
   /**
    * Class for tracking up to 'size' closest values
+   * The heap maintains the heap property: that the data is sorted in descending order (i.e. largest values are first, and smallest values are last).
    */
   private static class ResultHeap {
     private final Object[] data;
