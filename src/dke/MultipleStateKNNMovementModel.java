@@ -7,32 +7,35 @@ import java.util.List;
 
 import dke.KdTree.Entry;
 
-public class KNNMovementModel implements MovementModel {
+public class MultipleStateKNNMovementModel implements MovementModel<EnvironmentStateSequence, EnvironmentStateSequenceTree> {
   public DkeRobot robot;
   int k;
+  int numberOfStatesPerCompositeFeatureVector;
   int numberOfStatesToDiscard;
-  public HashMap<String, Pair<EnvironmentStateSequence, EnvironmentStateTree>> observationLog;
+  public HashMap<String, Pair<EnvironmentStateSequence, EnvironmentStateSequenceTree>> observationLog;
   
-  public KNNMovementModel(DkeRobot robot, int kNearestNeighbors, int numberOfStatesToDiscard) {
+  public MultipleStateKNNMovementModel(DkeRobot robot, int numberOfStatesPerCompositeFeatureVector, int kNearestNeighbors, int numberOfStatesToDiscard) {
     this.robot = robot;
     this.k = kNearestNeighbors;
+    this.numberOfStatesPerCompositeFeatureVector = numberOfStatesPerCompositeFeatureVector;
     this.numberOfStatesToDiscard = numberOfStatesToDiscard;
-    this.observationLog = new HashMap<String, Pair<EnvironmentStateSequence, EnvironmentStateTree>>();
+    this.observationLog = new HashMap<String, Pair<EnvironmentStateSequence, EnvironmentStateSequenceTree>>();
   }
   
   public void logStateObservation(String robotName, EnvironmentStateTuple observation) {
     if(!observationLog.containsKey(robotName)) {
       observationLog.put(robotName,
-                         new Pair<EnvironmentStateSequence, EnvironmentStateTree>(new EnvironmentStateSequence(),
-                                                                                  new EnvironmentStateTree()));
+                         new Pair<EnvironmentStateSequence, EnvironmentStateSequenceTree>(new EnvironmentStateSequence(),
+                                                                                          new EnvironmentStateSequenceTree(numberOfStatesPerCompositeFeatureVector)));
     }
     
     EnvironmentStateSequence observationSequence = observationLog.get(robotName).first;
-    EnvironmentStateTree observationTree = observationLog.get(robotName).last;
+    EnvironmentStateSequenceTree observationTree = observationLog.get(robotName).last;
     
     observationSequence.add(observation);
-    int indexOfObservation = observationSequence.size() - 1; 
-    observationTree.addPoint(observation.featureVector(), indexOfObservation);
+    int indexOfLastObservation = observationSequence.size() - 1;
+    double[] compositeFeatureVector = observationSequence.endSliceFeatureVector(indexOfLastObservation, numberOfStatesPerCompositeFeatureVector);
+    observationTree.addPoint(compositeFeatureVector, indexOfLastObservation);
 //    System.out.println(robot.getTime() + " @ observationSequence[" + indexOfObservation + "] = " + observation);
   }
   
@@ -42,16 +45,17 @@ public class KNNMovementModel implements MovementModel {
     EnvironmentStateSequence stateSeq = getStateSequence(enemyRobotName);
     if(stateSeq != null) {
       EnvironmentStateTuple currentState = stateSeq.last();
-      EnvironmentStateTree stateTree = getStateTree(enemyRobotName);
+      double[] currentCompositeFeatureVector = stateSeq.endSliceFeatureVector(stateSeq.size() - 1, numberOfStatesPerCompositeFeatureVector);
+      EnvironmentStateSequenceTree stateTree = getStateTree(enemyRobotName);
       
       if(currentState != null && stateTree != null) {
         // 1. find index of the environment state tuple(s) that most closely resemble(s) (i.e. is/are the nearest neighbor(s) of) the current/most-recent environment state.
-        List<Entry<Integer>> nearestNeighbors = stateTree.nearestNeighbor(currentState.featureVector(), k + numberOfStatesToDiscard, true);
+        List<Entry<Integer>> nearestNeighbors = stateTree.nearestNeighbor(currentCompositeFeatureVector, k + numberOfStatesToDiscard, true);
 //        System.out.println(nearestNeighbors.size());
         // NOTE: nearestNeighbors is sorted by neighbor distance, in descending order. So, the nearest neighbors are at the end of the list.
         
         if(nearestNeighbors.size() > 0) {
-          // find the nearest neighbor that was observed longer than 'numberOfPositionsToPredict' turns ago.
+          // find the nearest neighbor that was observed longer than 'numberOfStatesToDiscard' turns ago.
           Entry<Integer> tempFirstIndex = null;
           
           // We don't want to consider any of the states that were very very recent (and therefore too-near a neighbor) as the nearest neighbor,
@@ -92,18 +96,30 @@ public class KNNMovementModel implements MovementModel {
   public ArrayList<Point2D.Double> projectEnemyFuturePositions(EnvironmentStateTuple currentState, List<EnvironmentStateTuple> historicalStatesToReplay) {
     ArrayList<Point2D.Double> projectedPositions = new ArrayList<Point2D.Double>();
     Point2D.Double currentEnemyPosition = currentState.enemyRobot.position;
+    double currentEnemyHeading = currentState.enemyRobot.heading;
+    EnvironmentStateTuple prevState, nextState;
     Point2D.Double prevPos, nextPos;
+    double prevHeading;
     double distanceToNextPosition;
-    double headingToNextPosition;
+    double bearingToNextPosition;
+    double differenceInHeading;
     
     for(int i = 1; i < historicalStatesToReplay.size(); i++) {   // start at index 1 because the first element is the nearest neighbor to the current state (the most recent state).
-      prevPos = historicalStatesToReplay.get(i - 1).enemyRobot.position;
-      nextPos = historicalStatesToReplay.get(i).enemyRobot.position;
+      prevState = historicalStatesToReplay.get(i - 1);
+      nextState = historicalStatesToReplay.get(i);
+      
+      prevHeading = prevState.enemyRobot.heading;
+      differenceInHeading = nextState.enemyRobot.heading - prevHeading;
+      
+      prevPos = prevState.enemyRobot.position;
+      nextPos = nextState.enemyRobot.position;
       
       distanceToNextPosition = prevPos.distance(nextPos);
-      headingToNextPosition = Utils.headingToPoint(nextPos, prevPos);
       
-      currentEnemyPosition = Utils.pointAtHeading(headingToNextPosition, distanceToNextPosition, currentEnemyPosition);
+      bearingToNextPosition = Utils.bearingToPoint(nextPos, prevPos, prevHeading);
+      
+      currentEnemyPosition = Utils.pointAtBearing(bearingToNextPosition, distanceToNextPosition, currentEnemyPosition, currentEnemyHeading);
+      currentEnemyHeading = currentEnemyHeading + differenceInHeading;
       
       projectedPositions.add(currentEnemyPosition);
     }
@@ -118,7 +134,7 @@ public class KNNMovementModel implements MovementModel {
     return null;
   }
 
-  public EnvironmentStateTree getStateTree(String robotName) {
+  public EnvironmentStateSequenceTree getStateTree(String robotName) {
     if(observationLog.containsKey(robotName)) {
       return observationLog.get(robotName).last;
     }

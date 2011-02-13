@@ -2,6 +2,7 @@ package dke;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class EnvironmentStateSequence extends ArrayList<EnvironmentStateTuple> {
@@ -44,12 +45,35 @@ public class EnvironmentStateSequence extends ArrayList<EnvironmentStateTuple> {
     return get(size() - offset);
   }
   
+  // Returns a subsequence of the EnvironmentStateSequence (this) in the range [startIndex, startIndex + count)
   public List<EnvironmentStateTuple> slice(int startIndex, int count) {
     return subList(startIndex, Math.min(startIndex + count, size()));
   }
-
+  
+  public double[] endSliceFeatureVector(int endIndex, int count) {
+    return sliceFeatureVector(Math.max(0, endIndex - count + 1), count);
+  }
+  
+  // Returns a double[] of length (count * EnvironmentStateTuple.DIMENSION_COUNT).
+  // The array that is returned contains the feature vectors from the observations in the range [startIndex, startIndex + count)
+  // The composite feature vector is padded with 0's if there are not enough observations in the subsequence from which to extract feature vectors.
+  public double[] sliceFeatureVector(int startIndex, int count) {
+    double[] compositeFeatureVector = new double[EnvironmentStateTuple.DIMENSION_COUNT * count];
+    double[] zerosFeatureVector = new double[EnvironmentStateTuple.DIMENSION_COUNT];
+    Arrays.fill(zerosFeatureVector, 0.0);
+    
+    List<EnvironmentStateTuple> sublist = slice(startIndex, count);
+    for(int i = 0; i < sublist.size(); i++) {
+      System.arraycopy(sublist.get(i).featureVector(), 0, compositeFeatureVector, i * EnvironmentStateTuple.DIMENSION_COUNT, EnvironmentStateTuple.DIMENSION_COUNT);
+    }
+    for(int i = sublist.size(); i < count; i++) {
+      System.arraycopy(zerosFeatureVector, 0, compositeFeatureVector, i * EnvironmentStateTuple.DIMENSION_COUNT, EnvironmentStateTuple.DIMENSION_COUNT);
+    }
+    return compositeFeatureVector;
+  }
+  
   //************************** Enemy Attribute Getters ********************************
-
+  
   public ArrayList<Point2D.Double> getEnemyPositions(int count) {
     ArrayList<Point2D.Double> retval = new ArrayList<Point2D.Double>();
     for(int i = Math.max(0, size() - count); i < size(); i++) {

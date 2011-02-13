@@ -3,6 +3,7 @@ package dke;
 import robocode.*;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -23,10 +24,12 @@ public class Herb extends DkeRobot {
   public void initialize() {
     super.initialize();
     
-    setColors(Color.orange, Color.black, Color.yellow); // body,gun,radar
+//    System.out.println(this);
+    
+    setColors(Color.orange, Color.black, Color.yellow, Color.green, Color.white); // body,gun,radar
 
     //movementStrategy = new RectangularMovementStrategy(this);
-    movementStrategy = new ArcRectangularMovementStrategy(this);
+    movementStrategy = new RandomMovementStrategy(this);
     
     fireControlSystem = new StateLoggingFireControlSystem(this);
   }

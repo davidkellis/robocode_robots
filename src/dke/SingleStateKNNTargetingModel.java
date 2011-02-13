@@ -5,11 +5,11 @@ import java.util.ArrayList;
 
 import robocode.Rules;
 
-public class KNNTargetingModel implements TargetingModel {
+public class SingleStateKNNTargetingModel implements TargetingModel {
   DkeRobot robot;
   public int numberOfPositionsToProjectIntoFuture;
   
-  public KNNTargetingModel(DkeRobot robot, int numberOfPositionsToProjectIntoFuture) {
+  public SingleStateKNNTargetingModel(DkeRobot robot, int numberOfPositionsToProjectIntoFuture) {
     this.robot = robot;
     this.numberOfPositionsToProjectIntoFuture = numberOfPositionsToProjectIntoFuture;
   }

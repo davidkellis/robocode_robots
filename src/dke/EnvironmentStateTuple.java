@@ -3,7 +3,8 @@ package dke;
 import java.math.BigDecimal;
 
 public class EnvironmentStateTuple {
-  public static int DIMENSION_COUNT = 11;
+//  public static int DIMENSION_COUNT = 11;
+  public static int DIMENSION_COUNT = 4;
   
   RobotStateTuple enemyRobot;
   RobotStateTuple self;   // this field represent "me"/"self" from the perspective of the robot that is making use of this class.
@@ -22,17 +23,21 @@ public class EnvironmentStateTuple {
   }
   
   public double[] featureVector() {
-    return new double[]{enemyRobot.heading,
-                        enemyRobot.position.x, 
-                        enemyRobot.position.y, 
-                        enemyRobot.velocity, 
-                        enemyRobot.timeSinceLastShotFired,
-                        self.heading, 
-                        self.position.x, 
-                        self.position.y, 
-                        self.velocity, 
-                        self.timeSinceLastShotFired,
-                        time};
+  return new double[]{enemyRobot.heading,
+                      enemyRobot.position.x, 
+                      enemyRobot.position.y, 
+                      enemyRobot.velocity};
+//    return new double[]{enemyRobot.heading,
+//                        enemyRobot.position.x, 
+//                        enemyRobot.position.y, 
+//                        enemyRobot.velocity, 
+//                        enemyRobot.timeSinceLastShotFired,
+//                        self.heading, 
+//                        self.position.x, 
+//                        self.position.y, 
+//                        self.velocity, 
+//                        self.timeSinceLastShotFired,
+//                        time};
   }
   
   // This returns the Euclidean distance between feature vectors, where an EnvironmentStateTuple represents a feature vector

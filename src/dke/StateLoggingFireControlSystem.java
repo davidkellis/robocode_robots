@@ -23,16 +23,16 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
   public double firePower;
   public double radarScanWidthMultiplier;
   public String currentTarget;
-  public MovementModel movementModel;
-  public TargetingModel targetingModel;
+  public MovementModel<EnvironmentStateSequence, EnvironmentStateSequenceTree> movementModel;
+  public TargetingModel<EnvironmentStateSequence, EnvironmentStateSequenceTree> targetingModel;
   public int numberOfEnemyStepsToPredict;
   public int numberOfEnemyStepsToDiscard;
 
   public StateLoggingFireControlSystem(DkeRobot robot) {
     this.robot = robot;
     
-    numberOfEnemyStepsToPredict = 35;
-    numberOfEnemyStepsToDiscard = 35;
+    numberOfEnemyStepsToPredict = 60;
+    numberOfEnemyStepsToDiscard = 60;
     currentState = State.Initial;
     fireTime = 10000;
     firePower = 2.001;
@@ -40,11 +40,11 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
     timeTargetLastSeen = 0;
     timeLastShotFired = 0;
     currentTarget = null;
-
+    
 //  targetingModel = new LinearTargetingModel(robot, 2);
-    movementModel = new KNNMovementModel(robot, 1, numberOfEnemyStepsToDiscard);
-    targetingModel = new KNNTargetingModel(robot, numberOfEnemyStepsToPredict);
-}
+    movementModel = new MultipleStateKNNMovementModel(robot, 30, 1, numberOfEnemyStepsToDiscard);
+    targetingModel = new MultipleStateKNNTargetingModel(robot, numberOfEnemyStepsToPredict);
+  }
   
   /*
    * IMPORTANT NOTE: It seems that the onScannedRobot() event handler fires **before** the action loop is given the opportunity to run.
@@ -173,11 +173,19 @@ public class StateLoggingFireControlSystem implements FireControlSystem {
       firePower = 3.0;
     } else if (firePower < 300) {
       firePower = 2.0;
-    } else if (firePower < 500) {
-      firePower = 1.4;
-    } else {
+    } else if (firePower < 400) {
       firePower = 1.01;
+    } else {
+      firePower = 0.2;
     }
+
+//    if(distanceToEnemy < 400) {
+//      firePower = 3.0;
+//    } else {
+//      firePower = 2.0;
+//    }
+
+//      firePower = 0.1;
   }
   
   public void onPaint(Graphics2D g) {
